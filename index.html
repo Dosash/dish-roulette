@@ -31,6 +31,7 @@
   }
 
   *,*::before,*::after{box-sizing:border-box}
+  [hidden]{display:none !important}   /* class rules below must not out-specify it */
   html,body{height:100%}
   body{
     margin:0;
@@ -238,7 +239,7 @@
   .modal .verdict{margin:0 0 22px;font-size:15px;color:var(--text-dim)}
   .modal .removed{display:block;margin-top:8px;font-size:12.5px;color:var(--accent-3)}
   .modal .row{justify-content:center}
-  canvas#confetti{position:fixed;inset:0;z-index:60;pointer-events:none}
+  canvas#confetti{position:fixed;inset:0;width:100%;height:100%;z-index:60;pointer-events:none}
 
   footer{margin:26px 0 4px;text-align:center;font-size:12.5px;color:var(--text-faint)}
   kbd{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;background:rgba(255,255,255,.1);
@@ -458,16 +459,26 @@ function draw(){
     }
   }
 
-  // labels
+  // labels — flipped on the left half so they never read upside down
   ctx.font = `700 ${fontPx}px ${fam}`;
-  ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  ctx.textBaseline = "middle";
   ctx.fillStyle = "#1e1430";
   const hubR = Rin * 0.24;
   const maxW = Rin - hubR - fontPx * 0.9;
+  const pad = fontPx * 0.6;
   for(let i = 0; i < n; i++){
+    const mid = rotation + i * seg + seg / 2;
+    const label = fit(state.names[i], maxW);
     ctx.save();
-    ctx.rotate(rotation + i * seg + seg / 2);
-    ctx.fillText(fit(state.names[i], maxW), Rin - fontPx * 0.6, 0);
+    ctx.rotate(mid);
+    if(Math.cos(mid) < 0){
+      ctx.rotate(Math.PI);
+      ctx.textAlign = "left";
+      ctx.fillText(label, -(Rin - pad), 0);
+    }else{
+      ctx.textAlign = "right";
+      ctx.fillText(label, Rin - pad, 0);
+    }
     ctx.restore();
   }
 
@@ -834,7 +845,9 @@ document.addEventListener("keydown", e => {
 window.addEventListener("resize", () => {
   resize();
   if(confettiParts.length){
-    confettiCv.width = innerWidth; confettiCv.height = innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    confettiCv.width = innerWidth * dpr; confettiCv.height = innerHeight * dpr;
+    cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 });
 if(window.ResizeObserver) new ResizeObserver(resize).observe(wheelBox);

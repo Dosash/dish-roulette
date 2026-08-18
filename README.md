@@ -5,6 +5,8 @@
 
 **Открыть:** https://dosash.github.io/dish-roulette/
 
+![Скриншот](preview.png)
+
 ## Что умеет
 
 - Колесо на canvas с честным жребием (`crypto.getRandomValues`, а не `Math.random`)
