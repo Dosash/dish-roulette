@@ -7,6 +7,9 @@
 <meta name="description" content="Крути рулетку — узнай, кто сегодня моет посуду.">
 <meta name="theme-color" content="#12101c">
 <meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Рулетка">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%BD%3C/text%3E%3C/svg%3E">
 <style>
   /* ---------- design tokens ---------- */
@@ -132,7 +135,7 @@
 
   .add-row{display:flex;gap:8px}
   input[type=text]{
-    flex:1;min-width:0;font-family:inherit;font-size:15px;color:var(--text);
+    flex:1;min-width:0;font-family:inherit;font-size:16px;color:var(--text);
     background:rgba(0,0,0,.28);border:1px solid var(--stroke);border-radius:var(--radius-sm);
     padding:12px 14px;transition:border-color .18s, box-shadow .18s, background .18s;
   }
@@ -242,11 +245,83 @@
   canvas#confetti{position:fixed;inset:0;width:100%;height:100%;z-index:60;pointer-events:none}
 
   footer{margin:26px 0 4px;text-align:center;font-size:12.5px;color:var(--text-faint)}
+  footer .support{margin:9px 0 0;font-size:12.5px}
+  footer a{color:var(--text-dim);text-decoration:none;
+           border-bottom:1px dashed rgba(255,255,255,.22);transition:color .16s, border-color .16s}
+  footer a:hover{color:var(--accent);border-bottom-color:rgba(255,179,64,.65)}
+  footer a:focus-visible{outline:2px solid var(--accent-3);outline-offset:3px;border-radius:5px}
   kbd{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;background:rgba(255,255,255,.1);
       border:1px solid var(--stroke);border-bottom-width:2px;border-radius:6px;padding:1px 6px;color:var(--text-dim)}
 
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
+
+  /* ---------- mobile & touch ---------- */
+
+  /* no grey flash on tap, no double-tap zoom delay */
+  body{-webkit-tap-highlight-color:transparent}
+  button,input,label,.opt,.hub{touch-action:manipulation}
+
+  /* keep the wheel square and inside the viewport on short screens */
+  .wheel-box{max-width:none;width:min(100%,520px,78vh);width:min(100%,520px,78dvh)}
+
+  /* coarse pointers: hit areas >= 44px */
+  @media (pointer:coarse){
+    .btn{padding:13px 16px;min-height:46px}
+    .btn.ghost{font-size:13.5px;padding:10px 14px;min-height:44px}
+    .del{width:40px;height:40px;font-size:20px;border-radius:10px}
+    ul.names li{padding:8px 6px 8px 12px}
+    .opt{min-height:40px}
+    #clearHistBtn{min-height:30px}
+    footer a{display:inline-block;padding:5px 3px}
+  }
+
+  /* touch devices keep :hover styles stuck after a tap — neutralise them */
+  @media (hover:none){
+    .btn:hover{background:var(--panel-strong);border-color:var(--stroke)}
+    .btn.danger:hover{color:var(--text);border-color:var(--stroke);background:var(--panel-strong)}
+    .btn.ghost:hover{background:transparent;color:var(--text-dim)}
+    .btn.primary:hover{filter:none}
+    .del:hover{color:var(--text-faint);background:transparent}
+    .opt:hover{color:var(--text-dim)}
+    .hub:hover:not(:disabled){transform:none}
+  }
+
+  /* ---------- phones, portrait ---------- */
+  @media (max-width:640px){
+    body{
+      padding:12px;
+      padding-left:max(12px,env(safe-area-inset-left));
+      padding-right:max(12px,env(safe-area-inset-right));
+      padding-bottom:calc(12px + env(safe-area-inset-bottom));
+    }
+    header{gap:11px;margin-bottom:16px}
+    .logo{width:44px;height:44px;font-size:22px;border-radius:13px}
+    .sub{font-size:12.5px;line-height:1.35}
+    .stage{padding:14px;gap:14px}
+    .panel{padding:14px;gap:14px}
+    /* let the page scroll instead of nesting scroll areas */
+    ul.names{max-height:none;overflow:visible;padding-right:0}
+    ol.hist{max-height:none;overflow:visible}
+    .row .btn{flex:1}
+    .modal{padding:26px 18px 20px;border-radius:22px}
+    .modal .plate{font-size:38px}
+    .modal .row .btn{flex:1}
+    footer{margin:20px 0 4px;line-height:1.7}
+    .kbd-hint{display:none}
+  }
+
+  /* ---------- phones, landscape: two columns beat a long scroll ---------- */
+  @media (max-height:540px) and (orientation:landscape){
+    header{margin:0 0 10px}
+    .logo{width:40px;height:40px;font-size:20px;border-radius:12px}
+    .sub{display:none}
+    .grid{grid-template-columns:minmax(0,1fr) minmax(260px,.9fr);gap:14px}
+    .wheel-box{width:min(100%,62vh);width:min(100%,62dvh)}
+    .stage{padding:12px;gap:10px}
+    ul.names{max-height:min(46vh,240px);overflow:auto}
+    .kbd-hint{display:none}
+  }
   @media (prefers-reduced-motion:reduce){
     *{animation-duration:.01ms !important;transition-duration:.01ms !important}
   }
@@ -320,7 +395,12 @@
   </div>
 
   <footer>
-    <kbd>Enter</kbd> — добавить · <kbd>Пробел</kbd> — крутить · всё хранится только в твоём браузере
+    <span class="kbd-hint"><kbd>Enter</kbd> — добавить · <kbd>Пробел</kbd> — крутить · </span>всё хранится только в твоём браузере
+    <p class="support">
+      Нравится? Поддержать автора:
+      <a href="https://pay.cloudtips.ru/p/894f4248" target="_blank" rel="noopener noreferrer">рублём</a> ·
+      <a href="https://t.me/send?start=IVCyYmLsx06p" target="_blank" rel="noopener noreferrer">криптой</a>
+    </p>
   </footer>
 </div>
 
